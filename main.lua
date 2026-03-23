@@ -1,209 +1,250 @@
--- ====== TOGGLES ======
+-- ===== CLEAN =====
+if game.CoreGui:FindFirstChild("RifuHub") then
+    game.CoreGui.RifuHub:Destroy()
+end
+
+-- ===== GUI =====
+local gui = Instance.new("ScreenGui", game.CoreGui)
+gui.Name = "RifuHub"
+
+-- ===== PILL =====
+local pill = Instance.new("TextButton", gui)
+pill.Size = UDim2.new(0,60,0,160)
+pill.Position = UDim2.new(1,-70,0.12,0)
+pill.Text = "Rifu"
+pill.BackgroundColor3 = Color3.fromRGB(30,30,30)
+pill.TextColor3 = Color3.fromRGB(255,255,255)
+pill.TextStrokeTransparency = 0
+pill.Font = Enum.Font.GothamBold
+pill.TextScaled = true
+Instance.new("UICorner", pill).CornerRadius = UDim.new(1,0)
+
+-- ===== FRAME =====
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0,0,0,0)
+frame.Position = UDim2.new(0.5,0,0.5,0)
+frame.AnchorPoint = Vector2.new(0.5,0.5)
+frame.BackgroundColor3 = Color3.fromRGB(20,20,20)
+frame.Visible = false
+Instance.new("UICorner", frame).CornerRadius = UDim.new(0,12)
+
+-- ===== ANIMATION =====
+local open = false
+pill.MouseButton1Click:Connect(function()
+    open = not open
+    if open then
+        frame.Visible = true
+        for i=1,15 do
+            frame.Size = frame.Size:Lerp(UDim2.new(0,260,0,380),0.25)
+            task.wait()
+        end
+    else
+        for i=1,15 do
+            frame.Size = frame.Size:Lerp(UDim2.new(0,0,0,0),0.25)
+            task.wait()
+        end
+        frame.Visible = false
+    end
+end)
+
+-- ===== PLAYER =====
+local player = game.Players.LocalPlayer
+local function getHRP()
+    return player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+end
+
+local function teleTo(part)
+    local hrp = getHRP()
+    if hrp and part then
+        hrp.CFrame = part.CFrame + Vector3.new(0,5,0)
+    end
+end
+
+-- ===== TELE =====
+local function teleClair()
+    for _,v in pairs(workspace:GetDescendants()) do
+        if v.Name == "Clair" then
+            local p = v:FindFirstChildWhichIsA("BasePart")
+            if p then teleTo(p) break end
+        end
+    end
+end
+
+local function teleOrbital()
+    for _,v in pairs(workspace:GetDescendants()) do
+        if string.find(string.lower(v.Name),"orbital") then
+            local p = v:FindFirstChildWhichIsA("BasePart")
+            if p then teleTo(p) break end
+        end
+    end
+end
+
+-- ===== TOGGLES =====
 local toggles = {
-    solar = false,
-    lizard = false,
-    clair = false,
-    orbital = false,
-    metal = false
+    animals=false,
+    metal=false,
+    solar=false,
+    ice=false,
+    gold=false,
+    stone=false
 }
 
--- ====== CLEAR ESP ======
-local function clearESP()
+-- ===== CLEAR =====
+local function clearTypeESP(typeName)
     for _,v in pairs(workspace:GetDescendants()) do
-        if v:FindFirstChild("ESP") then v.ESP:Destroy() end
-        if v:FindFirstChild("NameESP") then v.NameESP:Destroy() end
-        if v:FindFirstChild("ESP_DONE") then v.ESP_DONE:Destroy() end
-    end
-end
-
--- ====== GUI ======
-local gui = Instance.new("ScreenGui", game.CoreGui)
-
-local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0,230,0,280)
-frame.Position = UDim2.new(0.05,0,0.3,0)
-frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
-
--- ===== AVATAR =====
-local avatar = Instance.new("ImageLabel", frame)
-avatar.Size = UDim2.new(0,40,0,40)
-avatar.Position = UDim2.new(0,5,0,5)
-avatar.BackgroundTransparency = 1
-avatar.Image = "https://yt3.googleusercontent.com/Z7UmfvXSUUf21znB8j4Po-xNdjjjLr5SdmGCubDFp7ljWWVzeWYQ0uKZj9Ja6BTbJ7kB03F-uQ=s160-c-k-c0x00ffffff-no-rj"
-
-local corner = Instance.new("UICorner", avatar)
-corner.CornerRadius = UDim.new(1,0)
-
-local stroke = Instance.new("UIStroke", avatar)
-stroke.Color = Color3.fromRGB(255,0,0)
-stroke.Thickness = 2
-
--- ===== DRAG =====
-local UIS = game:GetService("UserInputService")
-local dragging, dragInput, dragStart, startPos
-
-frame.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = true
-        dragStart = input.Position
-        startPos = frame.Position
-    end
-end)
-
-frame.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement then
-        dragInput = input
-    end
-end)
-
-UIS.InputChanged:Connect(function(input)
-    if input == dragInput and dragging then
-        local delta = input.Position - dragStart
-        frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X,
-            startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-    end
-end)
-
-UIS.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = false
-    end
-end)
-
--- ===== OPEN GUI BUTTON =====
-local openBtn = Instance.new("TextButton", gui)
-openBtn.Size = UDim2.new(0,100,0,40)
-openBtn.Position = UDim2.new(0,10,0,10)
-openBtn.Text = "Mở GUI"
-
-openBtn.MouseButton1Click:Connect(function()
-    frame.Visible = not frame.Visible
-end)
-
--- ===== CLOSE =====
-local close = Instance.new("TextButton", frame)
-close.Size = UDim2.new(0,30,0,30)
-close.Position = UDim2.new(1,-30,0,0)
-close.Text = "X"
-
-close.MouseButton1Click:Connect(function()
-    clearESP()
-    gui:Destroy()
-end)
-
--- ===== MINIMIZE =====
-local minimize = Instance.new("TextButton", frame)
-minimize.Size = UDim2.new(0,30,0,30)
-minimize.Position = UDim2.new(1,-60,0,0)
-minimize.Text = "-"
-
-local minimized = false
-
-minimize.MouseButton1Click:Connect(function()
-    minimized = not minimized
-    
-    for _,v in pairs(frame:GetChildren()) do
-        if v:IsA("TextButton") and v ~= minimize and v ~= close then
-            v.Visible = not minimized
-        end
-    end
-    
-    frame.Size = minimized and UDim2.new(0,230,0,30) or UDim2.new(0,230,0,280)
-end)
-
--- ===== BUTTON CREATOR =====
-local function createButton(text, posY, callback)
-    local btn = Instance.new("TextButton", frame)
-    btn.Size = UDim2.new(1,0,0,40)
-    btn.Position = UDim2.new(0,0,0,posY)
-    btn.Text = text.." [OFF]"
-
-    btn.MouseButton1Click:Connect(function()
-        local state = callback()
-        btn.Text = text.." ["..(state and "ON" or "OFF").."]"
-    end)
-end
-
--- ===== ESP =====
-local function solarESP(v)
-    if v.Name == "solar_panel" and not v:FindFirstChild("NameESP") then
-        local part = v:FindFirstChildWhichIsA("BasePart")
-        if part then
-            local bill = Instance.new("BillboardGui", v)
-            bill.Name = "NameESP"
-            bill.Size = UDim2.new(0,100,0,40)
-            bill.AlwaysOnTop = true
-            bill.Adornee = part
-            
-            local t = Instance.new("TextLabel", bill)
-            t.Size = UDim2.new(1,0,1,0)
-            t.BackgroundTransparency = 1
-            t.Text = "Solar Panel"
+        if v:GetAttribute("ESP_TYPE")==typeName then
+            if v:FindFirstChild("ESP") then v.ESP:Destroy() end
+            if v:FindFirstChild("BillboardGui") then v.BillboardGui:Destroy() end
         end
     end
 end
 
-local function lizardESP(v)
-    if v.Name == "lizard" and not v:FindFirstChild("ESP") then
-        local h = Instance.new("Highlight", v)
-        h.Name = "ESP"
-        h.FillColor = Color3.fromRGB(0,255,0)
-    end
+-- ===== ESP FUNCTIONS =====
+local function makeESP(v, textName, color, typeName)
+    if not v:IsA("Model") then return end
+    if v:FindFirstChild("ESP") then return end
+
+    local part = v:FindFirstChildWhichIsA("BasePart", true)
+    if not part then return end
+
+    local h = Instance.new("Highlight", v)
+    h.Name = "ESP"
+    h.FillColor = color
+    h.FillTransparency = 0.3
+
+    v:SetAttribute("ESP_TYPE", typeName)
+
+    local bill = Instance.new("BillboardGui", v)
+    bill.Size = UDim2.new(0,120,0,40)
+    bill.AlwaysOnTop = true
+    bill.Adornee = part
+
+    local txt = Instance.new("TextLabel", bill)
+    txt.Size = UDim2.new(1,0,1,0)
+    txt.BackgroundTransparency = 1
+    txt.Text = textName
+    txt.TextColor3 = color
+    txt.TextStrokeTransparency = 0
+    txt.TextScaled = true
+    txt.Font = Enum.Font.GothamBold
 end
 
-local function clairESP(v)
-    if v.Name == "Clair" and not v:FindFirstChild("NameESP") then
-        local part = v:FindFirstChildWhichIsA("BasePart")
-        if part then
-            local bill = Instance.new("BillboardGui", v)
-            bill.Name = "NameESP"
-            bill.Size = UDim2.new(0,100,0,40)
-            bill.AlwaysOnTop = true
-            bill.Adornee = part
-            
-            local t = Instance.new("TextLabel", bill)
-            t.Size = UDim2.new(1,0,1,0)
-            t.BackgroundTransparency = 1
-            t.Text = "Clair"
-        end
-    end
-end
-
-local function orbitalESP(v)
-    if string.find(string.lower(v.Name),"orbital") and not v:FindFirstChild("ESP_DONE") then
-        Instance.new("BoolValue", v).Name = "ESP_DONE"
-        Instance.new("Highlight", v)
+local function animalsESP(v)
+    if v:IsDescendantOf(workspace:FindFirstChild("animals") or workspace) then
+        makeESP(v,"ANIMAL",Color3.fromRGB(0,255,0),"animals")
     end
 end
 
 local function metalESP(v)
-    if v.Name == "metal_node" and not v:FindFirstChild("ESP_DONE") then
-        Instance.new("BoolValue", v).Name = "ESP_DONE"
-        Instance.new("Highlight", v)
+    if string.find(string.lower(v.Name),"metal") then
+        makeESP(v,"METAL",Color3.fromRGB(255,255,255),"metal")
     end
 end
 
--- ===== LOOP =====
+local function solarESP(v)
+    if string.find(string.lower(v.Name),"solar") then
+        makeESP(v,"SOLAR",Color3.fromRGB(0,170,255),"solar")
+    end
+end
+
+local function iceESP(v)
+    if string.find(string.lower(v.Name),"ice") then
+        makeESP(v,"ICE",Color3.fromRGB(0,255,255),"ice")
+    end
+end
+
+local function goldESP(v)
+    if string.find(string.lower(v.Name),"gold") then
+        makeESP(v,"GOLD",Color3.fromRGB(255,215,0),"gold")
+    end
+end
+
+local function stoneESP(v)
+    if string.find(string.lower(v.Name),"stone") then
+        makeESP(v,"STONE",Color3.fromRGB(170,170,170),"stone")
+    end
+end
+
+-- ===== SCAN =====
+local function scan()
+    for _,v in pairs(workspace:GetDescendants()) do
+        if toggles.animals then animalsESP(v) end
+        if toggles.metal then metalESP(v) end
+        if toggles.solar then solarESP(v) end
+        if toggles.ice then iceESP(v) end
+        if toggles.gold then goldESP(v) end
+        if toggles.stone then stoneESP(v) end
+    end
+end
+
 workspace.DescendantAdded:Connect(function(v)
-    if toggles.solar then solarESP(v) end
-    if toggles.lizard then lizardESP(v) end
-    if toggles.clair then clairESP(v) end
-    if toggles.orbital then orbitalESP(v) end
+    if toggles.animals then animalsESP(v) end
     if toggles.metal then metalESP(v) end
+    if toggles.solar then solarESP(v) end
+    if toggles.ice then iceESP(v) end
+    if toggles.gold then goldESP(v) end
+    if toggles.stone then stoneESP(v) end
 end)
 
+-- ===== BUTTON =====
+local function btn(name,pos,mode,func)
+    local b=Instance.new("TextButton",frame)
+    b.Size=UDim2.new(1,0,0,40)
+    b.Position=UDim2.new(0,0,0,pos)
+    b.BackgroundColor3=Color3.fromRGB(50,50,50)
+    b.TextColor3=Color3.fromRGB(255,255,255)
+    b.TextStrokeTransparency=0
+    b.TextScaled=true
+    b.Font=Enum.Font.GothamBold
+
+    if mode=="toggle" then
+        b.Text=name.." [OFF]"
+        b.MouseButton1Click:Connect(function()
+            local s=func()
+            b.Text=name.." ["..(s and "ON" or "OFF").."]"
+        end)
+    else
+        b.Text=name.." | CLICK"
+        b.MouseButton1Click:Connect(func)
+    end
+end
+
 -- ===== BUTTONS =====
-createButton("Solar", 50, function()
-    toggles.solar = not toggles.solar return toggles.solar end)
+btn("Clair",20,"click",teleClair)
+btn("Orbital",70,"click",teleOrbital)
 
-createButton("Lizard", 90, function()
-    toggles.lizard = not toggles.lizard return toggles.lizard end)
+btn("Animals",120,"toggle",function()
+    toggles.animals=not toggles.animals
+    if toggles.animals then scan() else clearTypeESP("animals") end
+    return toggles.animals
+end)
 
-createButton("Clair", 130, function()
-    toggles.clair = not toggles.clair return toggles.clair end)
+btn("Metal",160,"toggle",function()
+    toggles.metal=not toggles.metal
+    if toggles.metal then scan() else clearTypeESP("metal") end
+    return toggles.metal
+end)
 
-createButton("Orbital", 170, function()
-    toggles.orbital = not toggles.orbital return toggles.orbital end)
+btn("Solar",200,"toggle",function()
+    toggles.solar=not toggles.solar
+    if toggles.solar then scan() else clearTypeESP("solar") end
+    return toggles.solar
+end)
 
-createButton("Metal", 210, function()
-    toggles.metal = not toggles.metal return toggles.metal end)
+btn("Ice",240,"toggle",function()
+    toggles.ice=not toggles.ice
+    if toggles.ice then scan() else clearTypeESP("ice") end
+    return toggles.ice
+end)
+
+btn("Gold",280,"toggle",function()
+    toggles.gold=not toggles.gold
+    if toggles.gold then scan() else clearTypeESP("gold") end
+    return toggles.gold
+end)
+
+btn("Stone",320,"toggle",function()
+    toggles.stone=not toggles.stone
+    if toggles.stone then scan() else clearTypeESP("stone") end
+    return toggles.stone
+end)
