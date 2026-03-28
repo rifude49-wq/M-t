@@ -1,40 +1,184 @@
+-- ===== LOAD SAFE =====
+repeat task.wait() until game:IsLoaded()
+repeat task.wait() until game.Players.LocalPlayer
+
+local player = game.Players.LocalPlayer
+
 -- ===== RESET =====
 pcall(function()
-    game.CoreGui:FindFirstChild("RifuHUD"):Destroy()
+    if player.PlayerGui:FindFirstChild("RifuHUD") then
+        player.PlayerGui.RifuHUD:Destroy()
+    end
 end)
-
--- ===== VAR =====
-local player = game.Players.LocalPlayer
-local toggles = {
-    solar=false, metal=false, gold=false,
-    stone=false, ice=false, autoheal=false
-}
 
 -- ===== GUI =====
-local gui = Instance.new("ScreenGui", game.CoreGui)
-gui.Name="RifuHUD"
-
-local pill = Instance.new("TextButton", gui)
-pill.Size = UDim2.new(0,30,0,80)
-pill.Position = UDim2.new(1,-40,0.3,0)
-pill.BackgroundColor3 = Color3.fromRGB(0,0,0)
-pill.Text=""
-Instance.new("UICorner", pill).CornerRadius = UDim.new(1,0)
+local gui = Instance.new("ScreenGui")
+gui.Name = "RifuHUD"
+gui.ResetOnSpawn = false
+gui.Parent = player:WaitForChild("PlayerGui")
 
 local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0,300,0,420)
-frame.Position = UDim2.new(0.5,-150,0.5,-210)
+frame.Size = UDim2.new(0,260,0,300)
+frame.Position = UDim2.new(0.5,-130,0.5,-150)
 frame.BackgroundColor3 = Color3.fromRGB(20,20,20)
-frame.Visible=false
+frame.Active = true
+frame.Draggable = true
 
-pill.MouseButton1Click:Connect(function()
-    frame.Visible = not frame.Visible
+local layout = Instance.new("UIListLayout", frame)
+layout.Padding = UDim.new(0,6)
+
+local function btn(name,callback)
+    local b = Instance.new("TextButton",frame)
+    b.Size = UDim2.new(1,0,0,40)
+    b.Text = name.." [OFF]"
+    b.TextScaled = true
+
+    b.MouseButton1Click:Connect(function()
+        local state = callback()
+        if state ~= nil then
+            b.Text = name.." ["..(state and "ON" or "OFF").."]"
+        end
+    end)
+end
+
+-- ===== VAR =====
+local toggles = {
+    gold=false,
+    animals=false
+}
+
+local MAX_ESP = 40
+local espCount = 0
+
+-- ===== ROOT =====
+local function root()
+    local c = player.Character or player.CharacterAdded:Wait()
+    return c:WaitForChild("HumanoidRootPart")
+end
+
+-- ===== ESP =====
+local function addESP(v,color,name)
+    if espCount >= MAX_ESP then return end
+    if not (v:IsA("Model") or v:IsA("BasePart")) then return end
+    if v:FindFirstChild(name) then return end
+
+    local part = v:IsA("Model") and v:FindFirstChildWhichIsA("BasePart") or v
+    if not part then return end
+
+    local r = root()
+    if (r.Position - part.Position).Magnitude > 150 then return end
+
+    local h = Instance.new("Highlight")
+    h.Name = name
+    h.FillColor = color
+    h.FillTransparency = 0.5
+    h.OutlineTransparency = 0
+    h.Adornee = v
+    h.Parent = v
+
+    espCount += 1
+end
+
+local function removeESP(name)
+    for _,v in pairs(workspace:GetDescendants()) do
+        local h = v:FindFirstChild(name)
+        if h and h:IsA("Highlight") then
+            h:Destroy()
+        end
+    end
+end
+
+-- ===== SYNC ESP COUNT (FIX BUG) =====
+task.spawn(function()
+    while true do
+        task.wait(10)
+        local c = 0
+        for _,v in pairs(workspace:GetDescendants()) do
+            if v:FindFirstChild("ESP_GOLD") or v:FindFirstChild("ESP_ANIMAL") then
+                c += 1
+            end
+        end
+        espCount = c
+    end
 end)
 
-local scroll = Instance.new("ScrollingFrame", frame)
-scroll.Size = UDim2.new(1,0,1,0)
-scroll.CanvasSize = UDim2.new(0,0,0,0)
-scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+-- ===== SCAN NHẸ =====
+local function scanESP()
+    local scanned = 0
+
+    for _,v in pairs(workspace:GetDescendants()) do
+        if scanned > 300 then break end
+        scanned += 1
+
+        local n = v.Name:lower()
+
+        if toggles.gold and string.find(n,"gold") then
+            addESP(v,Color3.fromRGB(255,215,0),"ESP_GOLD")
+        end
+
+        if toggles.animals and v:IsA("Model") then
+            local hum = v:FindFirstChildOfClass("Humanoid")
+            if hum and not game.Players:GetPlayerFromCharacter(v) then
+                addESP(v,Color3.fromRGB(0,255,0),"ESP_ANIMAL")
+            end
+        end
+    end
+end
+
+-- ===== EVENT =====
+workspace.DescendantAdded:Connect(function(v)
+    task.defer(function()
+        local n = v.Name:lower()
+
+        if toggles.gold and string.find(n,"gold") then
+            addESP(v,Color3.fromRGB(255,215,0),"ESP_GOLD")
+        end
+
+        if toggles.animals and v:IsA("Model") then
+            local hum = v:FindFirstChildOfClass("Humanoid")
+            if hum and not game.Players:GetPlayerFromCharacter(v) then
+                addESP(v,Color3.fromRGB(0,255,0),"ESP_ANIMAL")
+            end
+        end
+    end)
+end)
+
+-- ===== TELE =====
+local function teleTo(name)
+    for _,v in pairs(workspace:GetDescendants()) do
+        if v:IsA("Model") and string.find(v.Name:lower(),name) then
+            local p = v:FindFirstChild("HumanoidRootPart")
+                or v.PrimaryPart
+                or v:FindFirstChildWhichIsA("BasePart")
+
+            if p then
+                root().CFrame = p.CFrame + Vector3.new(0,5,0)
+                break
+            end
+        end
+    end
+end
+
+-- ===== BUTTON =====
+btn("Gold ESP",function()
+    toggles.gold = not toggles.gold
+    if toggles.gold then scanESP() else removeESP("ESP_GOLD") end
+    return toggles.gold
+end)
+
+btn("Animals ESP",function()
+    toggles.animals = not toggles.animals
+    if toggles.animals then scanESP() else removeESP("ESP_ANIMAL") end
+    return toggles.animals
+end)
+
+btn("Tele Orbital",function()
+    teleTo("orbital")
+end)
+
+btn("Tele Clair",function()
+    teleTo("clair")
+end)scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
 scroll.BackgroundTransparency=1
 
 local layout = Instance.new("UIListLayout", scroll)
